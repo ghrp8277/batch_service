@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class StockDto {
     private String date;
-    private int openPrice;
-    private int highPrice;
-    private int lowPrice;
-    private int closePrice;
-    private int volume;
+    private Integer openPrice;
+    private Integer highPrice;
+    private Integer lowPrice;
+    private Integer closePrice;
+    private Integer volume;
 }

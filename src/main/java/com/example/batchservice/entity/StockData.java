@@ -21,19 +21,19 @@ public class StockData {
     private String date;
 
     @Column(name = "open_price", nullable = false)
-    private int openPrice;
+    private Integer openPrice;
 
     @Column(name = "high_price", nullable = false)
-    private int highPrice;
+    private Integer highPrice;
 
     @Column(name = "low_price", nullable = false)
-    private int lowPrice;
+    private Integer lowPrice;
 
     @Column(name = "close_price", nullable = false)
-    private int closePrice;
+    private Integer closePrice;
 
     @Column(name = "volume", nullable = false)
-    private int volume;
+    private Integer volume;
 
     @ManyToOne
     @JoinColumn(name = "stock_id", nullable = false)

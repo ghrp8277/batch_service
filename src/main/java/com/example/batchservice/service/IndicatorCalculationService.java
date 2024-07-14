@@ -18,6 +18,8 @@ public class IndicatorCalculationService {
     @Autowired
     private TechnicalIndicatorService technicalIndicatorService;
 
+    private static final int MAX_RETRY_ATTEMPTS = 3;
+
     @Transactional
     public void calculateIndicatorsForStock(Stock stock) {
         List<StockData> stockDataList = stockDataRepository.findByStock(stock);
@@ -31,5 +33,27 @@ public class IndicatorCalculationService {
         }
 
         stockDataRepository.saveAll(stockDataList);
+    }
+
+    public void calculateIndicatorsForStockWithRetry(Stock stock) {
+        int attempt = 0;
+
+        while (attempt < MAX_RETRY_ATTEMPTS) {
+            try {
+                calculateIndicatorsForStock(stock);
+                return;
+            } catch (Exception e) {
+                attempt++;
+                if (attempt >= MAX_RETRY_ATTEMPTS) {
+                    throw e;
+                }
+                // 짧은 대기 시간 후 재시도
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
     }
 }

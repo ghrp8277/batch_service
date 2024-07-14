@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -27,7 +26,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class BatchService {
@@ -90,37 +88,6 @@ public class BatchService {
         logger.info("일간 주가 데이터를 수집하고 저장합니다.");
     }
 
-//    public void calculateIndicatorsForAllStocks() {
-//        List<Stock> stocks = stockRepository.findAll();
-//        List<Future<?>> futures = new ArrayList<>();
-//
-//        for (Stock stock : stocks) {
-//            Future<?> future = executorService.submit(() -> {
-//                try {
-//                    indicatorCalculationService.calculateIndicatorsForStock(stock);
-//                } catch (Exception e) {
-//                    logger.error("Error calculating indicators for stock: " + stock.getCode(), e);
-//                }
-//            });
-//            futures.add(future);
-//        }
-//
-//        waitForCompletion(futures);
-//        shutdownExecutorService();
-//    }
-
-//    public void calculateIndicatorsForAllStocks() {
-//        List<Stock> stocks = stockRepository.findAll();
-//
-//        stocks.parallelStream().forEach(stock -> {
-//            try {
-//                indicatorCalculationService.calculateIndicatorsForStock(stock);
-//            } catch (Exception e) {
-//                logger.error("Error calculating indicators for stock: " + stock.getCode(), e);
-//            }
-//        });
-//    }
-
      public void calculateIndicatorsForAllStocks() {
         List<Stock> stocks = stockRepository.findAll();
         ExecutorService executorService = createExecutorService();
@@ -130,15 +97,25 @@ public class BatchService {
 
     private ExecutorService createExecutorService() {
         int numCores = Runtime.getRuntime().availableProcessors();
-        int poolSize = Math.min(numCores * 2, 50); // 최적의 스레드 수 설정
-        return Executors.newFixedThreadPool(poolSize);
+        long maxMemory = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+        long usedMemory = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
+        int memoryPerThread = (int) usedMemory / (numCores * 2);
+        int optimalThreadCount = calculateOptimalThreadCount(numCores, maxMemory, memoryPerThread);
+        return Executors.newFixedThreadPool(optimalThreadCount);
+    }
+
+    private int calculateOptimalThreadCount(int numCores, long maxMemory, int memoryPerThread) {
+        int memoryBasedThreadCount = (int) (maxMemory / memoryPerThread);
+        int cpuBasedThreadCount = numCores * 2;
+
+        return Math.min(cpuBasedThreadCount, memoryBasedThreadCount);
     }
 
     private void submitStockTasks(ExecutorService executorService, List<Stock> stocks) {
         for (Stock stock : stocks) {
             executorService.submit(() -> {
                 try {
-                    indicatorCalculationService.calculateIndicatorsForStock(stock);
+                    indicatorCalculationService.calculateIndicatorsForStockWithRetry(stock);
                 } catch (Exception e) {
                     logger.error("Error calculating indicators for stock: " + stock.getCode(), e);
                 }
@@ -259,8 +236,9 @@ public class BatchService {
         List<StockData> stockDataEntities = new ArrayList<>();
 
         for (StockDto stockDto : stockDataList) {
-            if (!existingStockDataMap.containsKey(stockDto.getDate())) {
-                StockData stockData = new StockData();
+            StockData stockData = existingStockDataMap.get(stockDto.getDate());
+            if (stockData == null) {
+                stockData = new StockData();
                 stockData.setDate(stockDto.getDate());
                 stockData.setOpenPrice(stockDto.getOpenPrice());
                 stockData.setHighPrice(stockDto.getHighPrice());
@@ -268,8 +246,32 @@ public class BatchService {
                 stockData.setClosePrice(stockDto.getClosePrice());
                 stockData.setVolume(stockDto.getVolume());
                 stockData.setStock(stock);
-
                 stockDataEntities.add(stockData);
+            } else {
+                boolean updated = false;
+                if (stockData.getOpenPrice() == null) {
+                    stockData.setOpenPrice(stockDto.getOpenPrice());
+                    updated = true;
+                }
+                if (stockData.getHighPrice() == null) {
+                    stockData.setHighPrice(stockDto.getHighPrice());
+                    updated = true;
+                }
+                if (stockData.getLowPrice() == null) {
+                    stockData.setLowPrice(stockDto.getLowPrice());
+                    updated = true;
+                }
+                if (stockData.getClosePrice() == null) {
+                    stockData.setClosePrice(stockDto.getClosePrice());
+                    updated = true;
+                }
+                if (stockData.getVolume() == null) {
+                    stockData.setVolume(stockDto.getVolume());
+                    updated = true;
+                }
+                if (updated) {
+                    stockDataEntities.add(stockData);
+                }
             }
         }
 
