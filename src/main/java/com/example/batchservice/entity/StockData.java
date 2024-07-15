@@ -35,21 +35,21 @@ public class StockData {
     @Column(name = "volume", nullable = false)
     private Integer volume;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stock_id", nullable = false)
     private Stock stock;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "moving_average_12", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
     private List<Double> movingAverage12;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "moving_average_20", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
     private List<Double> movingAverage20;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "moving_average_26", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
     private List<Double> movingAverage26;

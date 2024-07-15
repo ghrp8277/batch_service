@@ -10,6 +10,9 @@ public class DateUtil {
         LocalDate startDate = LocalDate.now();
 
         switch (timeframe) {
+            case TimeframeConstants.ONE_DAY:
+                startDate = startDate.minusDays(1);
+                break;
             case TimeframeConstants.ONE_MONTH:
                 startDate = startDate.minusMonths(1);
                 break;

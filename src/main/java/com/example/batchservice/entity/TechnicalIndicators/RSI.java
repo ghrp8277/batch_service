@@ -11,7 +11,7 @@ import java.util.Map;
 @Embeddable
 @Data
 public class RSI implements TechnicalIndicator {
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "rsi_values", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
     private List<Double> rsi = new ArrayList<>();
