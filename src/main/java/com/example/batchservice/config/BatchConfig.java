@@ -2,8 +2,9 @@ package com.example.batchservice.config;
 
 import com.example.batchservice.listener.JobCompletionNotificationListener;
 import com.example.batchservice.service.BatchService;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
@@ -24,6 +25,8 @@ import javax.sql.DataSource;
 @Configuration
 @EnableBatchProcessing
 public class BatchConfig {
+    private static final Logger logger = LoggerFactory.getLogger(BatchConfig.class);
+
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final BatchService batchService;
@@ -61,6 +64,18 @@ public class BatchConfig {
     public Step initialStep() {
         return new StepBuilder("initialStep", jobRepository)
                 .tasklet(initialTasklet(), transactionManager)
+                .listener(new StepExecutionListener() {
+                    @Override
+                    public void beforeStep(StepExecution stepExecution) {
+                        logger.info("Starting calculateIndicatorsStep");
+                    }
+
+                    @Override
+                    public ExitStatus afterStep(StepExecution stepExecution) {
+                        logger.info("Completed calculateIndicatorsStep with status: " + stepExecution.getExitStatus());
+                        return stepExecution.getExitStatus();
+                    }
+                })
                 .build();
     }
 
