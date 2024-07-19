@@ -2,6 +2,7 @@ package com.example.batchservice.entity.TechnicalIndicators;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,19 +12,22 @@ import java.util.Map;
 @Embeddable
 @Data
 public class MACD implements TechnicalIndicator {
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "macd_line", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
+    @BatchSize(size = 100)
     private List<Double> macdLine;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "signal_line", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
+    @BatchSize(size = 100)
     private List<Double> signalLine;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "histogram", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
+    @BatchSize(size = 100)
     private List<Double> histogram;
 
     @Override

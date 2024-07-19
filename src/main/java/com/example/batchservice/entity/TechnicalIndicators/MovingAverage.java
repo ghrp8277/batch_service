@@ -2,6 +2,7 @@ package com.example.batchservice.entity.TechnicalIndicators;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,19 +12,22 @@ import java.util.Map;
 @Embeddable
 @Data
 public class MovingAverage implements TechnicalIndicator {
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "sma_12", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
+    @BatchSize(size = 100)
     private List<Double> sma12;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "sma_20", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
+    @BatchSize(size = 100)
     private List<Double> sma20;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "sma_26", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
+    @BatchSize(size = 100)
     private List<Double> sma26;
 
     @Override

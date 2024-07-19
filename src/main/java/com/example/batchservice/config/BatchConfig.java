@@ -1,5 +1,6 @@
 package com.example.batchservice.config;
 
+import com.example.batchservice.constants.BatchConfigConstants;
 import com.example.batchservice.listener.JobCompletionNotificationListener;
 import com.example.batchservice.service.BatchService;
 import org.springframework.batch.core.Job;
@@ -48,18 +49,50 @@ public class BatchConfig {
     }
 
     @Bean
-    public Job initialJob(JobCompletionNotificationListener listener, Step initialStep, Step calculateIndicatorsStep) {
-        return new JobBuilder("initialJob", jobRepository)
+    public Job initialJob(JobCompletionNotificationListener listener, Step measureSingleTaskTimeStep, Step adjustThreadPoolSizeStep, Step initialStep, Step calculateIndicatorsStep)  {
+        return new JobBuilder(BatchConfigConstants.INITIAL_JOB_NAME, jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
-                .start(initialStep)
-                .next(calculateIndicatorsStep)
+                .start(measureSingleTaskTimeStep)
+                .next(adjustThreadPoolSizeStep)
+                .next(initialStep)
+//                .next(calculateIndicatorsStep)
                 .build();
     }
 
     @Bean
+    public Step measureSingleTaskTimeStep() {
+        return new StepBuilder(BatchConfigConstants.MEASURE_SINGLE_TASK_TIME_STEP_NAME, jobRepository)
+                .tasklet(measureSingleTaskTimeTasklet(), transactionManager)
+                .build();
+    }
+
+    @Bean
+    public Tasklet measureSingleTaskTimeTasklet() {
+        return (contribution, chunkContext) -> {
+            batchService.measureSingleTaskTime();
+            return RepeatStatus.FINISHED;
+        };
+    }
+
+    @Bean
+    public Step adjustThreadPoolSizeStep() {
+        return new StepBuilder(BatchConfigConstants.ADJUST_THREAD_POOL_SIZE_STEP_NAME, jobRepository)
+                .tasklet(adjustThreadPoolSizeTasklet(), transactionManager)
+                .build();
+    }
+
+    @Bean
+    public Tasklet adjustThreadPoolSizeTasklet() {
+        return (contribution, chunkContext) -> {
+            batchService.adjustThreadPoolSize();
+            return RepeatStatus.FINISHED;
+        };
+    }
+
+    @Bean
     public Step initialStep() {
-        return new StepBuilder("initialStep", jobRepository)
+        return new StepBuilder(BatchConfigConstants.INITIAL_STEP_NAME, jobRepository)
                 .tasklet(initialTasklet(), transactionManager)
                 .build();
     }
@@ -74,7 +107,7 @@ public class BatchConfig {
 
     @Bean
     public Step calculateIndicatorsStep() {
-        return new StepBuilder("calculateIndicatorsStep", jobRepository)
+        return new StepBuilder(BatchConfigConstants.CALCULATE_INDICATORS_STEP_NAME, jobRepository)
                 .tasklet(calculateIndicatorsTasklet(), transactionManager)
                 .build();
     }

@@ -46,11 +46,63 @@ public class BatchService {
     @Autowired
     private IndicatorCalculationService indicatorCalculationService;
 
+    private double averageProcessingTimePerStock = 0;
+
+    private int calculateOptimalThreadCount() {
+        int numCores = Runtime.getRuntime().availableProcessors();
+        long maxMemory = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+        long usedMemory = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
+        if (usedMemory <= 0) {
+            usedMemory = maxMemory / 10;
+        }
+        int memoryPerThread = (int) usedMemory / (numCores * 2);
+
+        double averageArrivalRate = (double) numCores / averageProcessingTimePerStock;
+        int optimalThreadCount = (int) Math.min(averageArrivalRate, maxMemory / memoryPerThread);
+        return Math.min(optimalThreadCount, numCores * 2);
+    }
+
+    public void adjustThreadPoolSize() {
+        try {
+            int optimalThreadCount = calculateOptimalThreadCount();
+            executorService.setCorePoolSize(optimalThreadCount);
+            executorService.setMaximumPoolSize(optimalThreadCount);
+        } catch (Exception e) {
+            executorService.setCorePoolSize(ThreadPoolConstants.THREAD_POOL_CORE_SIZE);
+            executorService.setMaximumPoolSize(ThreadPoolConstants.THREAD_POOL_MAX_SIZE);
+        }
+    }
+
+    private long measureSingleTaskTime(String symbol) {
+        long startTime = System.currentTimeMillis();
+        try {
+            List<StockDto> stockDataList = getStockDataWithRetry(symbol, NaverSymbolConstants.TimeFrame.DAY, MAX_DAYS_DATA_COUNT, ThreadPoolConstants.RETRY_COUNT);
+            saveStockData(stockDataList, symbol);
+        } catch (Exception e) {
+            logger.error("Error processing symbol: " + symbol, e);
+        }
+        return System.currentTimeMillis() - startTime;
+    }
+
+    public void measureSingleTaskTime() {
+        Optional<Stock> firstStockOptional = stockRepository.findAll().stream().findFirst();
+        if (firstStockOptional.isEmpty()) return;
+
+        Stock firstStock = firstStockOptional.get();
+        String symbol = firstStock.getCode();
+        long singleTaskTime = measureSingleTaskTime(symbol);
+        averageProcessingTimePerStock = singleTaskTime / 1000.0;
+
+        logger.info("Measured single task time: {} ms", singleTaskTime);
+    }
+
     public void collectAndSaveInitialData() {
-        List<String> symbols = NaverSymbolConstants.ALL_SYMBOLS;
+        List<Stock> stocks = stockRepository.findAll();
+        if (stocks.isEmpty()) return;
         List<Future<?>> futures = new ArrayList<>();
 
-        for (String symbol : symbols) {
+        for (int i = 1; i < stocks.size(); i++) {
+            String symbol = stocks.get(i).getCode();
             Future<?> future = executorService.submit(() -> {
                 try {
                     List<StockDto> stockDataList = getStockDataWithRetry(symbol, NaverSymbolConstants.TimeFrame.DAY, MAX_DAYS_DATA_COUNT, ThreadPoolConstants.RETRY_COUNT);
@@ -67,10 +119,12 @@ public class BatchService {
     }
 
     public void collectAndSaveDailyData() {
-        List<String> symbols = NaverSymbolConstants.ALL_SYMBOLS;
+        List<Stock> stocks = stockRepository.findAll();
+        if (stocks.isEmpty()) return;
         List<Future<?>> futures = new ArrayList<>();
 
-        for (String symbol : symbols) {
+        for (Stock stock : stocks) {
+            String symbol = stock.getCode();
             Future<?> future = executorService.submit(() -> {
                 try {
                     List<StockDto> stockDataList = getStockDataWithRetry(symbol, NaverSymbolConstants.TimeFrame.DAY, DAILY_DATA_COUNT, ThreadPoolConstants.RETRY_COUNT);
@@ -105,6 +159,11 @@ public class BatchService {
     }
 
     private int calculateOptimalThreadCount(int numCores, long maxMemory, int memoryPerThread) {
+//        if (memoryPerThread == 0) {
+//            logger.warn("Memory per thread is zero, defaulting to number of CPU cores");
+//            return numCores * 2;
+//        }
+
         int memoryBasedThreadCount = (int) (maxMemory / memoryPerThread);
         int cpuBasedThreadCount = numCores * 2;
 
