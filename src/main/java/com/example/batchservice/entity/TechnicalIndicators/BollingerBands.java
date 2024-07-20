@@ -11,17 +11,17 @@ import java.util.Map;
 @Embeddable
 @Data
 public class BollingerBands implements TechnicalIndicator {
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "bollinger_bands_upper", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
     private List<Double> upperBand;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "bollinger_bands_middle", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
     private List<Double> middleBand;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "bollinger_bands_lower", joinColumns = @JoinColumn(name = "stock_data_id"))
     @Column(name = "value")
     private List<Double> lowerBand;

@@ -35,6 +35,8 @@ dependencies {
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
 
+    implementation 'org.jsoup:jsoup:1.14.3'
+
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
