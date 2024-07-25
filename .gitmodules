@@ -1,0 +1,3 @@
+[submodule "src/main/java/com/example/batchservice/entity/common-technical-indicators"]
+	path = src/main/java/com/example/batchservice/entity/common-technical-indicators
+	url = https://github.com/ghrp8277/common-technical-indicators.git
