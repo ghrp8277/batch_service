@@ -159,11 +159,9 @@ public class BatchService {
     }
 
     private int calculateOptimalThreadCount(int numCores, long maxMemory, int memoryPerThread) {
-//        if (memoryPerThread == 0) {
-//            logger.warn("Memory per thread is zero, defaulting to number of CPU cores");
-//            return numCores * 2;
-//        }
-
+        if (memoryPerThread <= 0) {
+            memoryPerThread = (int) (maxMemory / 10);
+        }
         int memoryBasedThreadCount = (int) (maxMemory / memoryPerThread);
         int cpuBasedThreadCount = numCores * 2;
 

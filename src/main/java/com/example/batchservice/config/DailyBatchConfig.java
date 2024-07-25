@@ -1,5 +1,6 @@
 package com.example.batchservice.config;
 
+import com.example.batchservice.constants.BatchConfigConstants;
 import com.example.batchservice.listener.JobCompletionNotificationListener;
 import com.example.batchservice.service.BatchService;
 import org.springframework.batch.core.Job;
@@ -30,7 +31,7 @@ public class DailyBatchConfig {
 
     @Bean
     public Job dailyJob(JobCompletionNotificationListener listener, Step dailyStep) {
-        return new JobBuilder("dailyJob", jobRepository)
+        return new JobBuilder(BatchConfigConstants.DAILY_JOB_NAME, jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
                 .start(dailyStep)
@@ -39,7 +40,7 @@ public class DailyBatchConfig {
 
     @Bean
     public Step dailyStep() {
-        return new StepBuilder("dailyStep", jobRepository)
+        return new StepBuilder(BatchConfigConstants.DAILY_STEP_NAME, jobRepository)
                 .tasklet(dailyTasklet(), transactionManager)
                 .build();
     }

@@ -52,7 +52,7 @@ public class MACD implements TechnicalIndicator {
     private List<Double> calculateEMA(List<Double> prices, int period) {
         List<Double> ema = new ArrayList<>(prices.size());
         double multiplier = 2.0 / (period + 1);
-        ema.add(prices.get(0));
+        ema.add(prices.getFirst());
         for (int i = 1; i < prices.size(); i++) {
             double value = (prices.get(i) - ema.get(i - 1)) * multiplier + ema.get(i - 1);
             ema.add(value);

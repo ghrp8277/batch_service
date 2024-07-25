@@ -25,27 +25,24 @@ public class StockDataFetchService {
         Page<StockData> stockDataPage;
 
         do {
-            switch (indicator) {
-                case "movingAverage12":
-                    stockDataPage = stockDataRepository.findByStockWithMovingAverage12(stock, PageRequest.of(pageNumber, PAGE_SIZE));
-                    break;
-                case "movingAverage20":
-                    stockDataPage = stockDataRepository.findByStockWithMovingAverage20(stock, PageRequest.of(pageNumber, PAGE_SIZE));
-                    break;
-                case "movingAverage26":
-                    stockDataPage = stockDataRepository.findByStockWithMovingAverage26(stock, PageRequest.of(pageNumber, PAGE_SIZE));
-                    break;
-                case "bollingerBands":
-                    stockDataPage = stockDataRepository.findByStockWithBollingerBands(stock, PageRequest.of(pageNumber, PAGE_SIZE));
-                    break;
-                case "macd":
-                    stockDataPage = stockDataRepository.findByStockWithMacd(stock, PageRequest.of(pageNumber, PAGE_SIZE));
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown indicator: " + indicator);
-            }
+            stockDataPage = fetchStockDataPage(stock, indicator, pageNumber);
             allStockData.addAll(stockDataPage.getContent());
             pageNumber++;
         } while (stockDataPage.hasNext());
+    }
+
+    private Page<StockData> fetchStockDataPage(Stock stock, String indicator, int pageNumber) {
+        return switch (indicator) {
+            case "movingAverage12" ->
+                    stockDataRepository.findByStockWithMovingAverage12(stock, PageRequest.of(pageNumber, PAGE_SIZE));
+            case "movingAverage20" ->
+                    stockDataRepository.findByStockWithMovingAverage20(stock, PageRequest.of(pageNumber, PAGE_SIZE));
+            case "movingAverage26" ->
+                    stockDataRepository.findByStockWithMovingAverage26(stock, PageRequest.of(pageNumber, PAGE_SIZE));
+            case "bollingerBands" ->
+                    stockDataRepository.findByStockWithBollingerBands(stock, PageRequest.of(pageNumber, PAGE_SIZE));
+            case "macd" -> stockDataRepository.findByStockWithMacd(stock, PageRequest.of(pageNumber, PAGE_SIZE));
+            default -> throw new IllegalArgumentException("Unknown indicator: " + indicator);
+        };
     }
 }
