@@ -1,7 +1,7 @@
 package com.example.batchservice.repository;
 
-import com.example.batchservice.entity.Stock;
-import com.example.batchservice.entity.StockData;
+import com.example.common.Stock;
+import com.example.common.StockData;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;

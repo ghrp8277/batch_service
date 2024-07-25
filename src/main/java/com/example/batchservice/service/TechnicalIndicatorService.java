@@ -1,7 +1,10 @@
 package com.example.batchservice.service;
 
-import com.example.batchservice.entity.StockData;
-import com.example.batchservice.entity.TechnicalIndicators.*;
+import com.example.common.StockData;
+import com.example.common.MovingAverage;
+import com.example.common.BollingerBands;
+import com.example.common.MACD;
+import com.example.common.RSI;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

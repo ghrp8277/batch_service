@@ -1,8 +1,8 @@
 package com.example.batchservice.config;
 
 import com.example.batchservice.constants.NaverSymbolConstants;
-import com.example.batchservice.entity.Market;
-import com.example.batchservice.entity.Stock;
+import com.example.common.Market;
+import com.example.common.Stock;
 import com.example.batchservice.repository.MarketRepository;
 import com.example.batchservice.repository.StockRepository;
 import org.jsoup.Jsoup;

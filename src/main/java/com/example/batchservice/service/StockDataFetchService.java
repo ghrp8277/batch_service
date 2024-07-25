@@ -1,7 +1,7 @@
 package com.example.batchservice.service;
 
-import com.example.batchservice.entity.Stock;
-import com.example.batchservice.entity.StockData;
+import com.example.common.Stock;
+import com.example.common.StockData;
 import com.example.batchservice.repository.StockDataRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
