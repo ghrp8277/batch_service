@@ -16,6 +16,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.StringReader;
@@ -24,8 +25,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Service
 public class BatchService {
@@ -47,6 +46,7 @@ public class BatchService {
     private IndicatorCalculationService indicatorCalculationService;
 
     private double averageProcessingTimePerStock = 0;
+    private double averageCalculationTimePerStock = 0;
 
     private int calculateOptimalThreadCount() {
         int numCores = Runtime.getRuntime().availableProcessors();
@@ -62,9 +62,34 @@ public class BatchService {
         return Math.min(optimalThreadCount, numCores * 2);
     }
 
+    private int calculateOptimalThreadCountForCalculation() {
+        int numCores = Runtime.getRuntime().availableProcessors();
+        long maxMemory = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+        long usedMemory = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
+        if (usedMemory <= 0) {
+            usedMemory = maxMemory / 10;
+        }
+        int memoryPerThread = (int) usedMemory / (numCores * 2);
+
+        double averageArrivalRate = (double) numCores / averageCalculationTimePerStock;
+        int optimalThreadCount = (int) Math.min(averageArrivalRate, maxMemory / memoryPerThread);
+        return Math.min(optimalThreadCount, numCores * 2);
+    }
+
     public void adjustThreadPoolSize() {
         try {
             int optimalThreadCount = calculateOptimalThreadCount();
+            executorService.setCorePoolSize(optimalThreadCount);
+            executorService.setMaximumPoolSize(optimalThreadCount);
+        } catch (Exception e) {
+            executorService.setCorePoolSize(ThreadPoolConstants.THREAD_POOL_CORE_SIZE);
+            executorService.setMaximumPoolSize(ThreadPoolConstants.THREAD_POOL_MAX_SIZE);
+        }
+    }
+
+    public void adjustThreadPoolSizeForCalculation() {
+        try {
+            int optimalThreadCount = calculateOptimalThreadCountForCalculation();
             executorService.setCorePoolSize(optimalThreadCount);
             executorService.setMaximumPoolSize(optimalThreadCount);
         } catch (Exception e) {
@@ -94,6 +119,29 @@ public class BatchService {
         averageProcessingTimePerStock = singleTaskTime / 1000.0;
 
         logger.info("Measured single task time: {} ms", singleTaskTime);
+    }
+
+    private long measureSingleTaskTimeForCalculation(String symbol) {
+        long startTime = System.currentTimeMillis();
+        try {
+            Stock stock = stockRepository.findByCode(symbol).orElseThrow(() -> new IllegalArgumentException("Stock not found"));
+            indicatorCalculationService.calculateIndicatorsForStockWithRetry(stock);
+        } catch (Exception e) {
+            logger.error("Error processing symbol: " + symbol, e);
+        }
+        return System.currentTimeMillis() - startTime;
+    }
+
+    public void measureSingleTaskTimeForCalculation() {
+        Optional<Stock> firstStockOptional = stockRepository.findAll().stream().findFirst();
+        if (firstStockOptional.isEmpty()) return;
+
+        Stock firstStock = firstStockOptional.get();
+        String symbol = firstStock.getCode();
+        long singleTaskTime = measureSingleTaskTimeForCalculation(symbol);
+        averageCalculationTimePerStock = singleTaskTime / 1000.0;
+
+        logger.info("Measured single calculation task time: {} ms", singleTaskTime);
     }
 
     public void collectAndSaveInitialData() {
@@ -142,57 +190,27 @@ public class BatchService {
         logger.info("일간 주가 데이터를 수집하고 저장합니다.");
     }
 
-     public void calculateIndicatorsForAllStocks() {
+    public void calculateIndicatorsForAllStocks() {
         List<Stock> stocks = stockRepository.findAll();
-        ExecutorService executorService = createExecutorService();
-        submitStockTasks(executorService, stocks);
-        awaitTermination(executorService);
-    }
+        if (stocks.isEmpty()) return;
 
-    private ExecutorService createExecutorService() {
-        int numCores = Runtime.getRuntime().availableProcessors();
-        long maxMemory = Runtime.getRuntime().maxMemory() / (1024 * 1024);
-        long usedMemory = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
-        int memoryPerThread = (int) usedMemory / (numCores * 2);
-        int optimalThreadCount = calculateOptimalThreadCount(numCores, maxMemory, memoryPerThread);
-        return Executors.newFixedThreadPool(optimalThreadCount);
-    }
+        List<Future<?>> futures = new ArrayList<>();
+        for (int i = 1; i < stocks.size(); i++) {
+            String symbol = stocks.get(i).getCode();
 
-    private int calculateOptimalThreadCount(int numCores, long maxMemory, int memoryPerThread) {
-        if (memoryPerThread <= 0) {
-            memoryPerThread = (int) (maxMemory / 10);
-        }
-        int memoryBasedThreadCount = (int) (maxMemory / memoryPerThread);
-        int cpuBasedThreadCount = numCores * 2;
-
-        return Math.min(cpuBasedThreadCount, memoryBasedThreadCount);
-    }
-
-    private void submitStockTasks(ExecutorService executorService, List<Stock> stocks) {
-        for (Stock stock : stocks) {
-            executorService.submit(() -> {
+            Future<?> future = executorService.submit(() -> {
                 try {
+                    Stock stock = stockRepository.findByCode(symbol).orElseThrow(() -> new IllegalArgumentException("Stock not found"));
                     indicatorCalculationService.calculateIndicatorsForStockWithRetry(stock);
                 } catch (Exception e) {
-                    logger.error("Error calculating indicators for stock: " + stock.getCode(), e);
+                    logger.error("Error calculating indicators for stock: " + symbol, e);
                 }
             });
+            futures.add(future);
         }
-    }
 
-    private void awaitTermination(ExecutorService executorService) {
-        executorService.shutdown();
-        try {
-            if (!executorService.awaitTermination(60, TimeUnit.MINUTES)) { // 적절한 시간으로 조정
-                executorService.shutdownNow();
-                if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
-                    logger.error("ExecutorService did not terminate");
-                }
-            }
-        } catch (InterruptedException e) {
-            executorService.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
+        waitForCompletion(futures);
+        shutdownExecutorService();
     }
 
     private void waitForCompletion(List<Future<?>> futures) {

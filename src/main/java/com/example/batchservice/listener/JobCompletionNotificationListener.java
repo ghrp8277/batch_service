@@ -6,7 +6,7 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.stereotype.Component;
-
+import org.springframework.batch.core.StepExecution;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -30,17 +30,27 @@ public class JobCompletionNotificationListener implements JobExecutionListener {
         Duration jobDuration = Duration.between(startTime, Instant.now());
         if (jobExecution.getStatus() == BatchStatus.COMPLETED) {
             logger.info("Job 완료!");
-            logger.info("Job Duration: {} ms", jobDuration.toMillis());
         } else if (jobExecution.getStatus() == BatchStatus.FAILED) {
             logger.error("Job 실패!");
-            logger.error("Job Duration: {} ms", jobDuration.toMillis());
         }
 
-        jobExecution.getStepExecutions().forEach(stepExecution -> {
+        logger.info("Job Duration: {} ms", jobDuration.toMillis());
+
+        long successfulSteps = 0;
+        long totalSteps = jobExecution.getStepExecutions().size();
+
+        for (StepExecution stepExecution : jobExecution.getStepExecutions()) {
+            if (stepExecution.getStatus() == BatchStatus.COMPLETED) {
+                successfulSteps++;
+            }
+
             logger.info("Step Name: {}", stepExecution.getStepName());
             logger.info("Read Count: {}", stepExecution.getReadCount());
             logger.info("Write Count: {}", stepExecution.getWriteCount());
             logger.info("Commit Count: {}", stepExecution.getCommitCount());
-        });
+        }
+
+        double successRate = (double) successfulSteps / totalSteps * 100;
+        logger.info("Success Rate: {}%", successRate);
     }
 }

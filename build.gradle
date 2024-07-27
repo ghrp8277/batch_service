@@ -37,6 +37,11 @@ dependencies {
 
     implementation 'org.jsoup:jsoup:1.14.3'
 
+    //test
+    implementation 'io.github.resilience4j:resilience4j-spring-boot2:1.7.1'
+    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:1.7.1'
+    implementation 'io.github.resilience4j:resilience4j-retry:1.7.1'
+
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
