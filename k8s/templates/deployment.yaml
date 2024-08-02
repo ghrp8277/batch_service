@@ -15,9 +15,7 @@ spec:
     spec:
       containers:
         - name: spring-batch-container
-          image: 192.168.0.212:5555/spring-batch:20240320-004029
-          command: ["/bin/bash"]
-          args: ["/usr/src/main/entrypoint.sh"]
+          image: 192.168.0.212:5555/spring-batch:20240803-055109
           ports:
             - containerPort: 8096
           volumeMounts:

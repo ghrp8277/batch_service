@@ -23,7 +23,7 @@ DEPLOYMENT_FILE="deployment.yaml"
 
     echo ""
 
-    # Docker 이미지 푸시 jdbc 벌크 계산
+    # Docker 이미지 푸시
     echo "Docker 이미지 푸시 중..."
     docker push 192.168.0.212:5555/spring-batch:$CURRENT_DATE 2>&1
     if [ $? -eq 0 ]; then
@@ -46,24 +46,13 @@ DEPLOYMENT_FILE="deployment.yaml"
         exit 1
     fi
 
-    echo ""
-
-    # Kubernetes에 배포 파일 적용
-    echo "Kubernetes에 배포 파일 적용 중..."
-    kubectl apply -f $DEPLOYMENT_FILE 2>&1
-    if [ $? -eq 0 ]; then
-        echo "Kubernetes에 배포 파일 적용 성공"
-    else
-        echo "Kubernetes에 배포 파일 적용 실패"
-        exit 1
-    fi
-
 } | tee $LOG_FILE
 
-# 모든 작업이 성공적으로 완료된 경우 로그 파일 삭제
+# 모든 작업이 성공적으로 완료된 경우 로그 파일 삭제 및 로컬 이미지 삭제
 if [ $? -eq 0 ]; then
     rm $LOG_FILE
     echo "모든 작업이 성공적으로 완료되었습니다. 로그 파일을 삭제합니다."
+    docker rmi 192.168.0.212:5555/spring-batch:$CURRENT_DATE
 else
     echo "작업 중 오류가 발생했습니다. 로그 파일을 확인하세요: $LOG_FILE"
 fi
