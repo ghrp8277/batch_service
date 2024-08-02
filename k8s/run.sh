@@ -8,12 +8,12 @@ DEPLOYMENT_FILE="deployment.yaml"
 # 로그 파일 생성 및 빌드 로그 기록 시작
 {
     echo "=== Docker 이미지 빌드 및 푸시 시작: $CURRENT_DATE ==="
-    echo "이미지 태그: 192.168.0.212:5555/spring-orchestrator:$CURRENT_DATE"
+    echo "이미지 태그: 192.168.0.212:5555/spring-batch:$CURRENT_DATE"
     echo ""
 
     # Docker 이미지 빌드
     echo "Docker 이미지 빌드 중..."
-    docker build -t 192.168.0.212:5555/spring-orchestrator:$CURRENT_DATE -f ../Dockerfile .. 2>&1
+    docker build -t 192.168.0.212:5555/spring-batch:$CURRENT_DATE -f ../Dockerfile .. 2>&1
     if [ $? -eq 0 ]; then
         echo "Docker 이미지 빌드 성공"
     else
@@ -25,7 +25,7 @@ DEPLOYMENT_FILE="deployment.yaml"
 
     # Docker 이미지 푸시 jdbc 벌크 계산
     echo "Docker 이미지 푸시 중..."
-    docker push 192.168.0.212:5555/spring-orchestrator:$CURRENT_DATE 2>&1
+    docker push 192.168.0.212:5555/spring-batch:$CURRENT_DATE 2>&1
     if [ $? -eq 0 ]; then
         echo "Docker 이미지 푸시 성공"
     else
@@ -38,7 +38,7 @@ DEPLOYMENT_FILE="deployment.yaml"
 
     # deployment.yaml 파일 업데이트
     echo "Deployment 파일 업데이트 중..."
-    sed -i.bak "s|image: 192.168.0.212:5555/spring-orchestrator:.*|image: 192.168.0.212:5555/spring-orchestrator:$CURRENT_DATE|g" $DEPLOYMENT_FILE
+    sed -i.bak "s|image: 192.168.0.212:5555/spring-batch:.*|image: 192.168.0.212:5555/spring-batch:$CURRENT_DATE|g" $DEPLOYMENT_FILE
     if [ $? -eq 0 ]; then
         echo "Deployment 파일 업데이트 성공"
     else

@@ -37,6 +37,8 @@ dependencies {
 
     implementation 'org.jsoup:jsoup:1.14.3'
 
+    implementation 'io.github.cdimascio:dotenv-java:3.0.0'
+
     //test
     implementation 'io.github.resilience4j:resilience4j-spring-boot2:1.7.1'
     implementation 'io.github.resilience4j:resilience4j-circuitbreaker:1.7.1'
