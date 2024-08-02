@@ -4,6 +4,8 @@ import com.example.batchservice.constants.BatchConfigConstants;
 import com.example.batchservice.listener.JobCompletionNotificationListener;
 import com.example.batchservice.service.BatchService;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -50,6 +52,18 @@ public class DailyBatchConfig {
         return (contribution, chunkContext) -> {
             batchService.collectAndSaveDailyData();
             return RepeatStatus.FINISHED;
+        };
+    }
+
+    @Bean
+    public JobExecutionListener dailyJobListener() {
+        return new JobExecutionListener() {
+            @Override
+            public void afterJob(JobExecution jobExecution) {
+                if (jobExecution.getStatus().isUnsuccessful()) {
+                    return;
+                }
+            }
         };
     }
 }

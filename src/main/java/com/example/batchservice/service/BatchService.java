@@ -3,6 +3,7 @@ package com.example.batchservice.service;
 import com.example.batchservice.constants.NaverSymbolConstants;
 import com.example.batchservice.constants.ThreadPoolConstants;
 import com.example.batchservice.dto.StockDto;
+import com.example.batchservice.util.JsonUtil;
 import com.example.common.Stock;
 import com.example.common.StockData;
 import com.example.batchservice.repository.StockDataRepository;
@@ -44,6 +45,12 @@ public class BatchService {
 
     @Autowired
     private IndicatorCalculationService indicatorCalculationService;
+
+    @Autowired
+    private JsonUtil jsonUtil;
+
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
 
     private double averageProcessingTimePerStock = 0;
     private double averageCalculationTimePerStock = 0;
@@ -177,6 +184,10 @@ public class BatchService {
                 try {
                     List<StockDto> stockDataList = getStockDataWithRetry(symbol, NaverSymbolConstants.TimeFrame.DAY, DAILY_DATA_COUNT, ThreadPoolConstants.RETRY_COUNT);
                     saveStockData(stockDataList, symbol);
+                    Map<String, Object> messageMap = new HashMap<>();
+                    messageMap.put("symbol", symbol);
+                    String message = jsonUtil.toJson(messageMap);
+                    kafkaProducerService.sendDailyStockDataMessage(message);
                 } catch (Exception e) {
                     logger.error("Error processing symbol: " + symbol, e);
                 }
@@ -186,8 +197,6 @@ public class BatchService {
 
         waitForCompletion(futures);
         shutdownExecutorService();
-
-        logger.info("일간 주가 데이터를 수집하고 저장합니다.");
     }
 
     public void calculateIndicatorsForAllStocks() {

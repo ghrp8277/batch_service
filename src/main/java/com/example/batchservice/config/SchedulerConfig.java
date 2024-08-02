@@ -19,7 +19,10 @@ public class SchedulerConfig {
     }
 
     @Scheduled(cron = "0 0 0 * * ?") // 매일 00시에 실행
+//    @Scheduled(cron = "0 * * * * *")
     public void performDailyJob() throws Exception {
-        jobLauncher.run(dailyJob, new JobParametersBuilder().toJobParameters());
+        JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
+        jobParametersBuilder.addLong("timestamp", System.currentTimeMillis());
+        jobLauncher.run(dailyJob, jobParametersBuilder.toJobParameters());
     }
 }

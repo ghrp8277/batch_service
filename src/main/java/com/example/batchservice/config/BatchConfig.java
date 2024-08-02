@@ -64,9 +64,9 @@ public class BatchConfig {
                 .start(measureSingleTaskTimeStep)
                 .next(adjustThreadPoolSizeStep)
                 .next(initialStep)
-                .next(measureSingleCalculationTimeStep)
-                .next(adjustThreadPoolSizeForCalculationStep)
-                .next(calculateIndicatorsStep)
+//                .next(measureSingleCalculationTimeStep)
+//                .next(adjustThreadPoolSizeForCalculationStep)
+//                .next(calculateIndicatorsStep)
                 .build();
     }
 
