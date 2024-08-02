@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: batch-fluent-bit-config
+  namespace: prod
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Daemon Off
+        Log_Level debug
+        Parsers_File parsers.conf
+
+    [INPUT]
+        Name tail
+        Path /app/logs/myapp-*.log
+        Read_from_Head false
+
+    [OUTPUT]
+        name slack
+        match *
+        webhook https://hooks.slack.com/services/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

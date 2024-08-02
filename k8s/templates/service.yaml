@@ -1,0 +1,63 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: batch-service
+  namespace: prod
+spec:
+  selector:
+    app: batch
+  ports:
+    - protocol: TCP
+      port: 8096
+      targetPort: 8096
+  type: NodePort
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: batch-mysql-master-service
+  namespace: prod
+spec:
+  selector:
+    app: batch
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: batch-phpmyadmin-service
+  namespace: prod
+spec:
+  selector:
+    app: batch
+  ports:
+    - protocol: TCP
+      port: 3080
+      targetPort: 80
+  type: NodePort
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: batch-fluent-bit-service
+  namespace: prod
+spec:
+  selector:
+    app: batch
+  ports:
+    - name: tcp
+      protocol: TCP
+      port: 24220
+      targetPort: 24224
+    - name: udp
+      protocol: UDP
+      port: 24220
+      targetPort: 24224
+  type: NodePort
