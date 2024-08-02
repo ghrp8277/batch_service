@@ -6,10 +6,19 @@ check_mysql() {
   return $?
 }
 
-# Kafka가 실행될 때까지 대기
+check_kafka() {
+  nc -zv host.docker.internal 9093
+  return $?
+}
+
+while ! check_kafka; do
+  echo "Waiting for Kafka to be up..."
+  sleep 5
+done
+
 while ! check_mysql; do
   echo "Waiting for MySQL to be up..."
   sleep 5
 done
 
-echo "MySQL is up and running!"
+echo "MySQL and Kafka is up and running!"
