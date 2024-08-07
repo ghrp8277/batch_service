@@ -1,3 +1,29 @@
+database:
+  env:
+    port: 3306
+    user: root
+    password: testtest
+    db: main
+  volume:
+    mountPath: /var/lib/mysql
+
+redis:
+  master:
+    env:
+      port: 6379
+      user: admin
+      password: testtest
+    volume:
+      mountPath: /data
+
+  slave:
+    env:
+      port: 6380
+      user: admin
+      password: testtest
+    volume:
+      mountPath: /data
+
 fluentBit:
   volume:
     mountPath: /fluent-bit/etc/fluent-bit.conf

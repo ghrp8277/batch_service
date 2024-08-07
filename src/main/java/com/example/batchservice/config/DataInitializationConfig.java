@@ -1,6 +1,8 @@
 package com.example.batchservice.config;
 
 import com.example.batchservice.constants.NaverSymbolConstants;
+import com.example.batchservice.service.KafkaProducerService;
+import com.example.batchservice.util.JsonUtil;
 import com.example.common.Market;
 import com.example.common.Stock;
 import com.example.batchservice.repository.MarketRepository;
@@ -55,28 +57,34 @@ public class DataInitializationConfig {
         List<String[]> kospiStocks = fetchStockCodes(0);
         List<String[]> kosdaqStocks = fetchStockCodes(1);
 
-        for (String[] stock : kospiStocks) {
-            createStockIfNotExists(stock[0], stock[1], NaverSymbolConstants.Market.KOSPI);
-        }
-
-        for (String[] stock : kosdaqStocks) {
-            createStockIfNotExists(stock[0], stock[1], NaverSymbolConstants.Market.KOSDAQ);
-        }
+        saveStocks(kospiStocks, NaverSymbolConstants.Market.KOSPI);
+        saveStocks(kosdaqStocks, NaverSymbolConstants.Market.KOSDAQ);
     }
 
-    private void createStockIfNotExists(String code, String name, String marketName) {
-        Optional<Stock> stockOptional = stockRepository.findByCode(code);
-        if (stockOptional.isEmpty()) {
-            Optional<Market> marketOptional = marketRepository.findByName(marketName);
-            if (marketOptional.isPresent()) {
-                Stock stock = new Stock();
-                stock.setCode(code);
-                stock.setName(name);
-                stock.setMarket(marketOptional.get());
-                stockRepository.save(stock);
-            } else {
-                System.err.println("Market with name " + marketName + " not found in the database.");
+    private void saveStocks(List<String[]> stockData, String marketName) {
+        List<Stock> stocksToSave = new ArrayList<>();
+
+        for (String[] stock : stockData) {
+            String code = stock[0];
+            String name = stock[1];
+
+            Optional<Stock> stockOptional = stockRepository.findByCode(code);
+            if (stockOptional.isEmpty()) {
+                Optional<Market> marketOptional = marketRepository.findByName(marketName);
+                if (marketOptional.isPresent()) {
+                    Stock newStock = new Stock();
+                    newStock.setCode(code);
+                    newStock.setName(name);
+                    newStock.setMarket(marketOptional.get());
+                    stocksToSave.add(newStock);
+                } else {
+                    System.err.println("Market with name " + marketName + " not found in the database.");
+                }
             }
+        }
+
+        if (!stocksToSave.isEmpty()) {
+            stockRepository.saveAll(stocksToSave);
         }
     }
 

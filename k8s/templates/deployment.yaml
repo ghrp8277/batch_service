@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: spring-batch-container
-          image: 192.168.0.212:5555/spring-batch:20240803-055109
+          image: 192.168.0.212:5555/spring-batch:20240807-141536
           ports:
             - containerPort: 8096
           volumeMounts:
@@ -47,6 +47,9 @@ spec:
           volumeMounts:
             - name: batch-mysql-master-data
               mountPath: /var/lib/mysql
+            - name: mysql-config-volume
+              mountPath: /etc/mysql/my.cnf
+              subPath: my.cnf
 
         - name: phpmyadmin-container
           image: 192.168.0.212:5555/phpmyadmin/phpmyadmin
@@ -81,3 +84,6 @@ spec:
         - name: batch-fluent-config
           configMap:
             name: batch-fluent-bit-config
+        - name: mysql-config-volume
+          configMap:
+            name: mysql-master-config
