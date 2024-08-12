@@ -30,4 +30,4 @@ fluentBit:
     subPath: fluent-bit.conf
 
 log:
-  mountPath: /usr/src/main/logs
+  mountPath: /app/logs

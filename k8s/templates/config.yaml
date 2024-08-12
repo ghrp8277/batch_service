@@ -33,10 +33,16 @@ data:
 
     [INPUT]
         Name tail
-        Path /app/logs/myapp-*.log
-        Read_from_Head false
+        Path /app/logs/batch.log 
+        Read_from_Head true
+        Tag batch-log
+    
+    [FILTER]
+        Name grep
+        Match batch-log
+        Regex message Job.*
 
     [OUTPUT]
         name slack
-        match *
-        webhook https://hooks.slack.com/services/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
+        match batch-log
+        webhook https://hooks.slack.com/services/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
