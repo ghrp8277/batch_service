@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: spring-batch-container
-          image: 192.168.0.212:5555/spring-batch:20240812-220923
+          image: 192.168.0.212:5555/spring-batch:20240818-012009
           ports:
             - containerPort: 8096
           volumeMounts:
