@@ -1,8 +1,6 @@
 package com.example.batchservice.config;
 
 import com.example.batchservice.constants.NaverSymbolConstants;
-import com.example.batchservice.service.KafkaProducerService;
-import com.example.batchservice.util.JsonUtil;
 import com.example.common.Market;
 import com.example.common.Stock;
 import com.example.batchservice.repository.MarketRepository;

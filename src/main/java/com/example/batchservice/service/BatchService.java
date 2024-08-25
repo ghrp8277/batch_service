@@ -184,10 +184,6 @@ public class BatchService {
                 try {
                     List<StockDto> stockDataList = getStockDataWithRetry(symbol, NaverSymbolConstants.TimeFrame.DAY, DAILY_DATA_COUNT, ThreadPoolConstants.RETRY_COUNT);
                     saveStockData(stockDataList, symbol);
-                    Map<String, Object> messageMap = new HashMap<>();
-                    messageMap.put("symbol", symbol);
-                    String message = jsonUtil.toJson(messageMap);
-                    kafkaProducerService.sendDailyStockDataMessage(message);
                 } catch (Exception e) {
                     logger.error("Error processing symbol: " + symbol, e);
                 }

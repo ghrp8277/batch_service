@@ -18,8 +18,7 @@ public class SchedulerConfig {
         this.dailyJob = dailyJob;
     }
 
-    @Scheduled(cron = "0 0 0 * * ?") // 매일 00시에 실행
-//    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 17 * * MON-FRI") // 월-금 오후 5시에 실행
     public void performDailyJob() throws Exception {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
         jobParametersBuilder.addLong("timestamp", System.currentTimeMillis());
