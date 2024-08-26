@@ -4,8 +4,6 @@ import com.example.batchservice.constants.BatchConfigConstants;
 import com.example.batchservice.listener.JobCompletionNotificationListener;
 import com.example.batchservice.service.BatchService;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -16,6 +14,9 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.backoff.FixedBackOffPolicy;
+import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
@@ -50,20 +51,20 @@ public class DailyBatchConfig {
     @Bean
     public Tasklet dailyTasklet() {
         return (contribution, chunkContext) -> {
-            batchService.collectAndSaveDailyData();
-            return RepeatStatus.FINISHED;
-        };
-    }
+            RetryTemplate retryTemplate = new RetryTemplate();
 
-    @Bean
-    public JobExecutionListener dailyJobListener() {
-        return new JobExecutionListener() {
-            @Override
-            public void afterJob(JobExecution jobExecution) {
-                if (jobExecution.getStatus().isUnsuccessful()) {
-                    return;
-                }
-            }
+            // 재시도 정책 설정 (예: 최대 3번 시도)
+            retryTemplate.setRetryPolicy(new SimpleRetryPolicy(3));
+
+            // 백오프 정책 설정 (1초 간격)
+            FixedBackOffPolicy backOffPolicy = new FixedBackOffPolicy();
+            backOffPolicy.setBackOffPeriod(1000); // 1초 간격 설정
+            retryTemplate.setBackOffPolicy(backOffPolicy);
+
+            return retryTemplate.execute(context -> {
+                batchService.collectAndSaveDailyData();
+                return RepeatStatus.FINISHED;
+            });
         };
     }
 }
