@@ -10,25 +10,38 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class BatchController {
-
     private final JobLauncher jobLauncher;
     private final Job dailyJob;
+    private final Job initialJob;
 
     @Autowired
-    public BatchController(JobLauncher jobLauncher, Job dailyJob) {
+    public BatchController(JobLauncher jobLauncher, Job dailyJob, Job initialJob) {
         this.jobLauncher = jobLauncher;
         this.dailyJob = dailyJob;
+        this.initialJob = initialJob;
+    }
+
+    @GetMapping("/run-daliy-batch")
+    public ResponseEntity<String> runDailyBatch() {
+        try {
+            jobLauncher.run(dailyJob, new JobParametersBuilder()
+                    .addLong("time", System.currentTimeMillis())
+                    .toJobParameters());
+            return ResponseEntity.ok("Daily batch job has been invoked");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Daily batch job failed");
+        }
     }
 
     @GetMapping("/run-batch")
     public ResponseEntity<String> runBatch() {
         try {
-            jobLauncher.run(dailyJob, new JobParametersBuilder()
+            jobLauncher.run(initialJob, new JobParametersBuilder()
                     .addLong("time", System.currentTimeMillis())
                     .toJobParameters());
-            return ResponseEntity.ok("Batch job has been invoked");
+            return ResponseEntity.ok("Initial batch job has been invoked");
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Batch job failed");
+            return ResponseEntity.status(500).body("Initial batch job failed");
         }
     }
 }
